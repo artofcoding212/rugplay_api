@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@std/path": "jsr:@std/path@^1.1.0",
+    "chalk": "npm:chalk@^5.4.1"
+  }
+}
