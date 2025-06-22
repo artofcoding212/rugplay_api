@@ -392,6 +392,57 @@ let commands: Map<string, Command> = new Map()
             }
         }
     })
+    .set("invest", {
+        desc: "invests in the most possible coins with a given budget and amount to spend on each coin",
+        args: ["budget", "amt", "page"], callback: async (args: string[]): Promise<void> => {
+            if (args.length < 2) {
+                console.log("Invald paramteres to command");
+                return;
+            }
+
+            const budget = parseFloat(args.shift() as string);
+            if (Number.isNaN(budget)) {
+                return;
+            }
+            const amount = parseFloat(args.shift() as string);
+            if (Number.isNaN(amount)) {
+                return;
+            }
+            const limit = Math.floor(budget/amount);
+            const page = args.length == 0 ? "1" : args.shift();
+            let a = await api_req(
+                `market?search=&sortBy=marketCap&sortOrder=desc&priceFilter=all&changeFilter=all&page=${page}&limit=${limit}`,
+                'GET'
+            );
+            if (a==undefined) {
+                return;
+            }
+            if (!a.ok) {
+                console.log(`${chalk.redBright('API ERROR')}:`);
+                console.log(await a.text());
+                return;
+            }
+            const json = await a.json();
+            console.log(`Investing in ${chalk.greenBright(limit)} coins at the top of the marketplace`);
+            for (let i = 0; i<limit; i++){
+                const symbol = json.coins[i].symbol;
+                a = await api_req(
+                    `coin/${symbol}/trade`,
+                    'POST',
+                    JSON.stringify({ type: "BUY", amount })
+                );
+                if (a==undefined) {
+                    return;
+                }
+                if (!a.ok) {
+                    console.log(`${chalk.redBright('API ERROR')}:`);
+                    console.log(await a.text());
+                    return;
+                }
+                console.log(` Invested in ${chalk.bgWhite(symbol)} (-${chalk.redBright(amount)})`);
+            }
+        }
+    })
     .set("view-user", {
         desc: "views a user's stats by username (not display name)",
         args: ["user"], callback: async (args: string[]): Promise<void> => {
